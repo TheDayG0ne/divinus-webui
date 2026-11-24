@@ -52,6 +52,29 @@
 		} catch (e) { message('isp-message', 'Save failed: ' + e.message); }
 		finally { $('save').disabled = false; }
 	});
+	const audioFields = ['enable', 'bitrate', 'gain', 'srate'];
+	function showAudio(data) {
+		if (typeof data.enable !== 'boolean' || !audioFields.slice(1).every(key => Number.isInteger(data[key]))) throw new Error('Unexpected audio response');
+		$('audio-enable').checked = data.enable;
+		for (const key of audioFields.slice(1)) $('audio-' + key).value = data[key];
+		for (const key of audioFields) $('audio-' + key).disabled = false;
+		$('audio-apply').disabled = false;
+	}
+	async function loadAudio() {
+		try { showAudio(await request('/api/audio')); }
+		catch (e) { message('audio-message', 'Audio settings unavailable: ' + e.message); }
+	}
+	$('audio-form').addEventListener('submit', async event => {
+		event.preventDefault();
+		const values = new URLSearchParams();
+		values.set('enable', String($('audio-enable').checked));
+		for (const key of audioFields.slice(1)) values.set(key, $('audio-' + key).value);
+		$('audio-apply').disabled = true;
+		try {
+			showAudio(await request('/api/audio?' + values));
+			message('audio-message', 'Configuration updated; save separately to persist. Verify audio on the device.');
+		} catch (e) { message('audio-message', 'Update failed: ' + e.message); $('audio-apply').disabled = false; }
+	});
 	let playing = false;
 	function preview(on) {
 		playing = on;
@@ -72,5 +95,5 @@
 		} catch (e) { message('preview-note', 'MJPEG availability unknown: ' + e.message); }
 		try { const data = await request('/api/jpeg'); $('snapshot').hidden = !data.enable; } catch (_) { /* Optional endpoint. */ }
 	}
-	status(); loadIsp(); media();
+	status(); loadIsp(); loadAudio(); media();
 }());

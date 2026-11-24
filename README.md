@@ -6,6 +6,7 @@ An experimental Divinus-facing frontend derived from [OpenIPC/majestic-webui](ht
 
 - Status from `GET /api/status`.
 - MJPEG preview from `/mjpeg` when `/api/mjpeg` reports it enabled, and a snapshot link when `/api/jpeg` reports JPEG enabled.
+- Read and update audio enable, bitrate, gain and sample rate via `/api/audio`. Applying restarts the audio pipeline; actual device support varies.
 - Read and update `mirror`, `flip` and `antiflicker` with `/api/isp`; explicitly persist the current configuration with `/api/cmd?save`. Divinus updates configuration here; it does not promise that the ISP hardware changes immediately. Restart may be required.
 
 Availability depends on the Divinus build, configuration, device and browser. No Majestic `/api/v1`, CGI, WebRTC, settings tree, firmware management, recording manager or login flow is claimed to work. This is not yet validated on a physical x86 camera.

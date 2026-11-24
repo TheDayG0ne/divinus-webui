@@ -33,6 +33,13 @@
         <label for="antiflicker" class="form-label">Antiflicker (Hz; -1 off)</label><input class="form-control mb-3" id="antiflicker" type="number" min="-1" max="60" required disabled>
         <div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary btn-sm" id="apply" disabled>Apply</button><button class="btn btn-outline-secondary btn-sm" id="save" type="button" disabled>Save configuration</button></div>
       </form><p class="small mt-3 mb-0" id="isp-message" role="status"></p></div></div>
+      <div class="card mt-3"><div class="card-body"><h2 class="h5">Audio</h2><p class="small text-secondary">Applying restarts the audio pipeline. Device support varies; save configuration separately to persist.</p><form id="audio-form">
+        <div class="form-check form-switch mb-2"><input class="form-check-input" id="audio-enable" type="checkbox" disabled><label class="form-check-label" for="audio-enable">Enable audio</label></div>
+        <label class="form-label" for="audio-bitrate">Bitrate (kbps)</label><input class="form-control mb-2" id="audio-bitrate" type="number" min="32" max="320" required disabled>
+        <label class="form-label" for="audio-gain">Gain</label><input class="form-control mb-2" id="audio-gain" type="number" min="-60" max="30" required disabled>
+        <label class="form-label" for="audio-srate">Sample rate (Hz)</label><input class="form-control mb-3" id="audio-srate" type="number" min="8000" max="96000" required disabled>
+        <button class="btn btn-primary btn-sm" id="audio-apply" disabled>Apply audio</button>
+      </form><p class="small mt-3 mb-0" id="audio-message" role="status"></p></div></div>
     </section>
   </div>
 </main>
