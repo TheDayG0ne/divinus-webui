@@ -1,10 +1,10 @@
 # Divinus WebUI x86
 
-A same-origin x86 dashboard derived from [OpenIPC/majestic-webui](https://github.com/OpenIPC/majestic-webui). It displays configured `camera-1` through `camera-4` slots from Divinus `GET /api/cameras` version 1. The launcher manifest is read-only: `status: unknown` does not mean a camera is connected, streaming or available. Empty, failed and invalid registries are reported without inventing a camera.
+A same-origin x86 dashboard derived from [OpenIPC/majestic-webui](https://github.com/OpenIPC/majestic-webui). It displays configured `camera-1` through `camera-4` slots from Divinus `GET /api/cameras` version 1. The launcher manifest is read-only and accepts zero through four unique slots: `status: unknown` does not mean a camera is connected, streaming or available. Per-slot snapshot and live status are not implemented; this does not claim those features are globally unavailable. Empty, failed and invalid registries are reported without inventing a camera.
 
 The dashboard deliberately does not invent stream, snapshot or settings routes. It does not create RTSP URLs from a port: the server contract does not provide a worker address or RTSP path, and no field explicitly authorizes a usable RTSP link. All requests and links use relative same-origin paths; no HTTP ports or origins are added.
 
-Dynamic camera management, snapshot and live status are not implemented yet. The dashboard preserves this warning and shows only the configured slot identity and validated RTSP port. Other Divinus backends may differ. This frontend has not been validated on a physical x86 camera.
+Dynamic camera management, per-slot snapshot and per-slot live status are not implemented yet. The dashboard preserves this warning and shows only the configured slot identity and validated RTSP port. Other Divinus backends may differ. This frontend has not been validated on a physical x86 camera.
 
 ## Deployment
 

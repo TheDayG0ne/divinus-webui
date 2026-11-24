@@ -16,6 +16,18 @@
 			camera.status === 'unknown' && Number.isInteger(camera.rtsp_port) &&
 			camera.rtsp_port >= 1 && camera.rtsp_port <= 65535;
 	}
+	function readSlots(data) {
+		if (!data || data.version !== 1 || data.discovery !== 'launcher-manifest' || !Array.isArray(data.cameras)) {
+			throw new Error('Invalid camera registry');
+		}
+		if (data.cameras.length > 4) throw new Error('Invalid camera registry: maximum 4 slots');
+		const ids = new Set();
+		for (const camera of data.cameras) {
+			if (!validSlot(camera) || ids.has(camera.id)) throw new Error('Invalid camera slot in registry');
+			ids.add(camera.id);
+		}
+		return data.cameras.slice().sort((a, b) => a.id.localeCompare(b.id));
+	}
 	function renderCamera(camera) {
 		const col = document.createElement('div'); col.className = 'col-sm-6 col-xl-3';
 		const card = document.createElement('div'); card.className = 'card camera-tile h-100';
@@ -37,9 +49,7 @@
 		try {
 			const data = await request('/api/cameras');
 			if (current !== generation) return;
-			if (!data || data.version !== 1 || !Array.isArray(data.cameras)) throw new Error('Invalid camera registry');
-			const cameras = data.cameras.filter(validSlot).sort((a, b) => a.id.localeCompare(b.id));
-			if (cameras.length !== data.cameras.length) throw new Error('Invalid camera slot in registry');
+			const cameras = readSlots(data);
 			cameras.forEach(renderCamera);
 			if (!cameras.length) {
 				$('empty-message').hidden = false;
