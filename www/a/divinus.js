@@ -84,7 +84,7 @@
 		if (on) $('preview').src = '/mjpeg';
 		else $('preview').removeAttribute('src');
 	}
-	$('preview').addEventListener('error', () => { preview(false); message('preview-note', 'MJPEG stream unavailable. Check the device and its configuration.'); });
+	$('preview').addEventListener('error', () => { preview(false); message('preview-note', 'MJPEG stream unavailable. Divinus did not provide the stream.'); });
 	$('preview-toggle').addEventListener('click', () => { if (playing) message('preview-note', 'Preview stopped.'); preview(!playing); });
 	$('refresh').addEventListener('click', status);
 	async function media() {

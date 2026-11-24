@@ -13,24 +13,11 @@ Availability depends on the Divinus build, configuration, device and browser. No
 
 ## Deployment
 
-Divinus serves its own embedded page at `/` and does **not** serve this `index.html` there. Its optional static file handler uses filesystem paths and supplies an incorrect MIME type; do not expose that handler to untrusted clients. Serve `www/` using a separate HTTP server, and reverse proxy `/api/`, `/mjpeg` and `/image.jpg` to Divinus on the same origin. An illustrative nginx configuration follows (adapt paths, ports, authentication and network access to your installation):
+This frontend is intended to be served by Divinus itself: enable `web_enable_static` and point `DIVINUS_STATIC_ROOT`/the device static root at the contents of `www/`. The page, assets, API calls, snapshot and MJPEG stream then remain same-origin; no second web server or reverse proxy is part of this frontend.
 
-```nginx
-server {
-    listen 8081;
-    root /opt/divinus-webui/www;
-    location = / { try_files /index.html =404; }
-    location = /index.html { try_files $uri =404; }
-    location ^~ /a/ { try_files $uri =404; }
-    location = /favicon.ico { try_files $uri =404; }
-    location ^~ /api/ { proxy_pass http://127.0.0.1:8080; proxy_set_header Host $host:$server_port; }
-    location = /mjpeg { proxy_pass http://127.0.0.1:8080; proxy_buffering off; proxy_read_timeout 1h; }
-    location = /image.jpg { proxy_pass http://127.0.0.1:8080; }
-    location / { return 404; }
-}
-```
+When `web_enable_auth` is enabled, Divinus protects the page, assets, API and media endpoints with HTTP Basic authentication. The browser handles the challenge for a same-origin navigation, and the frontend uses `credentials: 'same-origin'` for API requests. Configure authentication in Divinus (`web_auth_user`, `web_auth_pass` and, if appropriate, `web_auth_skiplocal`) rather than adding a separate login or proxy layer. On an unclaimed device, Divinus serves its embedded first-claim page at `/` and accepts its documented `POST /setup` flow; this repository does not replace that server-owned setup page.
 
-Configure Divinus to listen on port 8080 and restrict direct access to it. Divinus Basic authentication, if enabled, is passed through by nginx; configure appropriate TLS and access control at the proxy and do not expose either service directly to the internet. Divinus uses state-changing GET requests; its own cross-site protections and authentication depend on the deployed version and proxy headers. Test them before deployment. Do not expose the inherited CGI scripts, setup pages, or sensitive files. The proxy example does not integrate Divinus's first-claim flow: provision the device separately first. Divinus API and JPEG/MJPEG capabilities can differ between versions and platforms.
+The frontend only relies on the Divinus endpoints documented in `D:\\OpenIPC-x86\\sources\\divinus\\doc\\endpoints.md`: `/api/status`, `/api/isp`, `/api/audio`, `/api/mjpeg`, `/api/jpeg`, `/api/cmd?save`, `/mjpeg` and `/image.jpg`. Endpoint availability still depends on the Divinus configuration and hardware. In particular, the x86 UVC backend can consume MJPEG or YUYV and encode H.264, but it does not provide audio and does not provide continuous MJPEG output; those UVC limitations must not be generalized to all Divinus platforms. The UI reports capability responses instead of promising a stream.
 
 ## Development
 
