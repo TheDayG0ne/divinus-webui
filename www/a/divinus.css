@@ -1,0 +1,5 @@
+.divinus-preview { background: #090b0d; min-height: 18rem; display: flex; align-items: center; justify-content: center; border-radius: .5rem; overflow: hidden; }
+.divinus-preview img { width: 100%; height: auto; object-fit: contain; }
+.divinus-preview p { color: #adb5bd; padding: 1rem; margin: 0; text-align: center; }
+.divinus-status { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1rem; }
+.divinus-status dd { margin: 0; overflow-wrap: anywhere; }

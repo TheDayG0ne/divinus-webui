@@ -1,0 +1,34 @@
+'use strict';
+const assert = require('assert');
+const fs = require('fs');
+const vm = require('vm');
+const path = require('path');
+const html = fs.readFileSync(path.join(__dirname, '../www/index.html'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../www/a/divinus.js'), 'utf8');
+const elements = {};
+for (const [, id] of html.matchAll(/id="([^"]+)"/g)) elements[id] = element();
+function element() { return { hidden: false, disabled: false, checked: false, value: '', textContent: '', handlers: {}, children: [], addEventListener(type, fn) { this.handlers[type] = fn; }, append(...items) { this.children.push(...items); }, replaceChildren() { this.children = []; }, removeAttribute(name) { delete this[name]; } }; }
+const calls = [];
+let failStatus = false;
+const answers = { '/api/status': { chip: '<unsafe>', loadavg: [1, 2, 3] }, '/api/isp': { mirror: false, flip: true, antiflicker: 60 }, '/api/mjpeg': { enable: true }, '/api/jpeg': { enable: false }, '/api/cmd?save': { code: 0 } };
+const fetch = async url => { calls.push(url); if (url === '/api/status' && failStatus) return { ok: false, status: 503 }; return { ok: true, json: async () => answers[url] || { mirror: true, flip: true, antiflicker: 50 } }; };
+vm.runInNewContext(source, { document: { getElementById: id => { assert(elements[id], id); return elements[id]; }, createElement: element }, fetch, URLSearchParams, confirm: () => true });
+const flush = () => new Promise(resolve => setImmediate(resolve));
+(async () => {
+ await flush(); await flush();
+ assert.strictEqual(elements.preview.src, '/mjpeg');
+ assert.strictEqual(elements.snapshot.hidden, true);
+ assert.strictEqual(elements.status.children[1].textContent, '<unsafe>');
+ assert.strictEqual(elements.flip.checked, true);
+ elements.mirror.checked = true; elements.antiflicker.value = '50';
+ await elements['isp-form'].handlers.submit({ preventDefault() {} });
+ assert(calls.includes('/api/isp?mirror=true&flip=true&antiflicker=50'));
+ await elements.save.handlers.click();
+ assert(calls.includes('/api/cmd?save'));
+ assert.strictEqual(elements['isp-message'].textContent, 'Configuration saved.');
+ elements['preview-toggle'].handlers.click();
+ assert.strictEqual(elements.preview.src, undefined);
+ failStatus = true; await elements.refresh.handlers.click(); await flush();
+ assert.match(elements['status-message'].textContent, /503/);
+ console.log('Divinus frontend tests passed');
+})().catch(error => { console.error(error); process.exitCode = 1; });

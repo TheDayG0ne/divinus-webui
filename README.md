@@ -1,74 +1,38 @@
-![OpenIPC logo][1]
+# Divinus WebUI x86
 
-WebUI
-======
+An experimental Divinus-facing frontend derived from [OpenIPC/majestic-webui](https://github.com/OpenIPC/majestic-webui), retaining its logo, Bootstrap theme and visual components. The default entry point is a deliberately small Divinus-specific page; the inherited Majestic CGI pages and tools are **not** a supported Divinus interface.
 
-WebUI is a web interface for [OpenIPC Firmware][2],
-and is available on port 80 of your camera.
+## Implemented
 
-Web interface uses system credentials for access, with _root_ as the username.
+- Status from `GET /api/status`.
+- MJPEG preview from `/mjpeg` when `/api/mjpeg` reports it enabled, and a snapshot link when `/api/jpeg` reports JPEG enabled.
+- Read and update `mirror`, `flip` and `antiflicker` with `/api/isp`; explicitly persist the current configuration with `/api/cmd?save`. Divinus updates configuration here; it does not promise that the ISP hardware changes immediately. Restart may be required.
 
-A camera fresh from the factory has **no root password at all**, and until one
-is set it is *unclaimed*: it streams nothing, answers RTSP and ONVIF with 401,
-and serves only the page that claims it. Point a browser at the camera and it
-takes you there — set a password, accept the Majestic licence, and you land in
-the WebUI signed in. `ssh root@<camera>` claims it just as well, and whichever
-door you use the other one sees it immediately. Note that this is the camera's
-system password: it is your ssh login too.
+Availability depends on the Divinus build, configuration, device and browser. No Majestic `/api/v1`, CGI, WebRTC, settings tree, firmware management, recording manager or login flow is claimed to work. This is not yet validated on a physical x86 camera.
 
-Older cameras shipped with _12345_ instead. On those the WebUI sends you
-straight to its Access page until you change it.
+## Deployment
 
-Signing in through the web form issues a session cookie; that cookie is what
-lets the live preview, log viewer and firmware-update progress work in every
-browser (Safari does not attach HTTP Basic credentials to a WebSocket
-handshake). HTTP Basic still works for `curl`/CLI/webhook access, and the
-navigation bar's **Sign out** link ends the session.
+Divinus serves its own embedded page at `/` and does **not** serve this `index.html` there. Its optional static file handler uses filesystem paths and supplies an incorrect MIME type; do not expose that handler to untrusted clients. Serve `www/` using a separate HTTP server, and reverse proxy `/api/`, `/mjpeg` and `/image.jpg` to Divinus on the same origin. An illustrative nginx configuration follows (adapt paths, ports, authentication and network access to your installation):
 
-### Support
+```nginx
+server {
+    listen 8081;
+    root /opt/divinus-webui/www;
+    location = / { try_files /index.html =404; }
+    location = /index.html { try_files $uri =404; }
+    location ^~ /a/ { try_files $uri =404; }
+    location = /favicon.ico { try_files $uri =404; }
+    location ^~ /api/ { proxy_pass http://127.0.0.1:8080; proxy_set_header Host $host:$server_port; }
+    location = /mjpeg { proxy_pass http://127.0.0.1:8080; proxy_buffering off; proxy_read_timeout 1h; }
+    location = /image.jpg { proxy_pass http://127.0.0.1:8080; }
+    location / { return 404; }
+}
+```
 
-OpenIPC offers two levels of support.
+Configure Divinus to listen on port 8080 and restrict direct access to it. Divinus Basic authentication, if enabled, is passed through by nginx; configure appropriate TLS and access control at the proxy and do not expose either service directly to the internet. Divinus uses state-changing GET requests; its own cross-site protections and authentication depend on the deployed version and proxy headers. Test them before deployment. Do not expose the inherited CGI scripts, setup pages, or sensitive files. The proxy example does not integrate Divinus's first-claim flow: provision the device separately first. Divinus API and JPEG/MJPEG capabilities can differ between versions and platforms.
 
-- Free support through the community via [chat][3].
-- Paid commercial support directly from the team of developers.
+## Development
 
-Please consider subscribing for paid commercial support if you intend to use our
-product for business. As a paid customer, you will get technical support and
-maintenance services directly from our skilled team. Your bug reports and
-feature requests will get prioritized attention and expedited solutions. It's a
-win-win strategy for both parties, that would contribute to the stability your
-business, and help core developers to work on the project full-time.
+`node tests/divinus.test.js` exercises the frontend against mocked Divinus responses; it is not a substitute for testing with a real device. Original upstream tests remain available via `npm test` and mostly cover inherited Majestic code, not this page.
 
-If you have any specific questions concerning our project, feel free to
-[contact us](mailto:dev@openipc.org).
-
-### Participating and Contribution
-
-If you like what we do, and willing to intensify the development, please
-consider participating.
-
-You can improve existing code and send us patches. You can add new features
-missing from our code.
-
-Remember that you write for embedded linux thus please keep
-your code as small and optimized as possible. Avoid using extra libraries like
-jQuery, pure JavaScript is quite enough. Use valid HTML5 code. Avoid using
-deprecated tags and attributes.
-
-You can help us to write a better documentation, proofread and correct our
-websites.
-
-You can just donate some money to cover the cost of development and long-term
-maintaining of what we believe is going to be the most stable, flexible, and
-open IP Network Camera Framework for users like yourself.
-
-You can make a financial contribution to the project at [Open Collective][4].
-
-Thank you.
-
-<p style="text-align:center"><a href="https://opencollective.com/openipc/contribute/backer-14335/checkout" target="_blank"><img src="https://opencollective.com/webpack/donate/button@2x.png?color=blue" width="375" alt="Open Collective donate button"></a></p>
-
-[1]: https://raw.githubusercontent.com/OpenIPC/.github/refs/heads/main/assets/openipc-logo-black.svg
-[2]: https://github.com/openipc/firmware
-[3]: https://openipc.org/community
-[4]: https://opencollective.com/openipc/contribute/backer-14335/checkout
+MIT licensed; see `LICENSE`.
