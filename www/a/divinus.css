@@ -3,3 +3,6 @@
 .divinus-preview p { color: #adb5bd; padding: 1rem; margin: 0; text-align: center; }
 .divinus-status { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1rem; }
 .divinus-status dd { margin: 0; overflow-wrap: anywhere; }
+.camera-tile { border: 1px solid var(--bs-border-color); color: inherit; background: var(--bs-body-bg); }
+.camera-tile:hover, .camera-tile:focus { border-color: var(--bs-primary); }
+.camera-tile .card-body { min-height: 7rem; }
