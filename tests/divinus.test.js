@@ -9,38 +9,32 @@ function element() { return { hidden: false, textContent: '', children: [], hand
 const elements = {};
 for (const [, id] of html.matchAll(/id="([^"]+)"/g)) elements[id] = element();
 const calls = [];
-let registry = { version: 1, discovery: 'local-only', cameras: [{ id: 'local', status: 'unknown', capabilities: { snapshot_configured: true, mjpeg_configured: true, mp4_configured: false }, routes: { snapshot: 'https://evil.test/', mjpeg: '//evil.test/' }, port: 1234 }] };
+let registry = { version: 1, discovery: 'launcher-manifest', cameras: [
+	{ id: 'camera-1', status: 'unknown', rtsp_port: 8554 },
+	{ id: 'camera-4', status: 'unknown', rtsp_port: 9554 }
+] };
 let failure = 0;
 const fetch = async (url, options) => {
- calls.push(url); assert(url.startsWith('/') && !url.startsWith('//')); assert.strictEqual(options.credentials, 'same-origin');
- if (url === '/api/cameras' && failure) return { ok: false, status: failure };
- return { ok: true, json: async () => url === '/api/cameras' ? registry : { chip: '<unsafe>' } };
+	calls.push(url); assert(url.startsWith('/') && !url.startsWith('//')); assert.strictEqual(options.credentials, 'same-origin');
+	if (failure) return { ok: false, status: failure };
+	return { ok: true, json: async () => registry };
 };
 vm.runInNewContext(source, { document: { getElementById: id => { assert(elements[id], id); return elements[id]; }, createElement: element }, fetch });
 const flush = () => new Promise(resolve => setImmediate(resolve));
 (async () => {
- await flush(); await flush();
- assert.deepStrictEqual(calls, ['/api/cameras', '/api/status']);
- assert.match(elements['status-message'].textContent, /availability is unknown/);
- assert.match(elements['capabilities'].textContent, /snapshot on, MJPEG on, MP4 off/);
- assert.match(elements['capabilities'].textContent, /does not confirm/);
- assert.strictEqual(elements.snapshot.hidden, false);
- assert.strictEqual(elements.status.children[1].textContent, '<unsafe>');
- registry = { version: 1, cameras: [] }; await elements.refresh.handlers.click();
- assert.strictEqual(elements['camera-grid'].children.length, 0);
- assert.strictEqual(elements['empty-message'].hidden, false);
- assert.strictEqual(elements['camera-detail'].hidden, true);
- failure = 404; await elements.refresh.handlers.click();
- assert.match(elements['status-message'].textContent, /404/);
- assert.strictEqual(elements['camera-grid'].children.length, 0);
- assert.strictEqual(elements['empty-message'].hidden, true);
- failure = 503; await elements.refresh.handlers.click();
- assert.match(elements['status-message'].textContent, /503/);
- failure = 0; registry = {}; await elements.refresh.handlers.click();
- assert.match(elements['status-message'].textContent, /Invalid camera registry/);
- assert.strictEqual(elements['camera-detail'].hidden, true);
- registry = { version: 1, cameras: [{ id: 'local', status: 'unknown', capabilities: {} }] }; await elements.refresh.handlers.click();
- assert.match(elements.capabilities.textContent, /snapshot unknown/);
- assert.strictEqual(elements.snapshot.hidden, true);
- console.log('Divinus frontend tests passed');
+	await flush(); await flush();
+	assert.deepStrictEqual(calls, ['/api/cameras']);
+	assert.match(elements['status-message'].textContent, /2 configured camera slots/);
+	assert.strictEqual(elements['camera-grid'].children.length, 2);
+	assert.match(elements['camera-grid'].children[0].children[0].children[0].children[0].textContent, /camera-1/);
+	registry = { version: 1, cameras: [] }; await elements.refresh.handlers.click();
+	assert.strictEqual(elements['camera-grid'].children.length, 0);
+	assert.strictEqual(elements['empty-message'].hidden, false);
+	failure = 503; await elements.refresh.handlers.click();
+	assert.match(elements['status-message'].textContent, /503/);
+	failure = 0; registry = { version: 1, cameras: [{ id: 'camera-5', status: 'unknown', rtsp_port: 8554 }] }; await elements.refresh.handlers.click();
+	assert.match(elements['status-message'].textContent, /Invalid camera slot/);
+	registry = { version: 1, cameras: [{ id: 'camera-1', status: 'live', rtsp_port: 8554 }] }; await elements.refresh.handlers.click();
+	assert.match(elements['status-message'].textContent, /Invalid camera slot/);
+	console.log('Divinus frontend tests passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

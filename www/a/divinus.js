@@ -9,52 +9,44 @@
 	function message(id, text) { $(id).textContent = text; }
 	function clear() {
 		$('camera-grid').replaceChildren();
-		$('camera-detail').hidden = true;
 		$('empty-message').hidden = true;
-		$('snapshot').hidden = true;
-		$('status').replaceChildren();
+	}
+	function validSlot(camera) {
+		return camera && typeof camera === 'object' && /^camera-[1-4]$/.test(camera.id) &&
+			camera.status === 'unknown' && Number.isInteger(camera.rtsp_port) &&
+			camera.rtsp_port >= 1 && camera.rtsp_port <= 65535;
+	}
+	function renderCamera(camera) {
+		const col = document.createElement('div'); col.className = 'col-sm-6 col-xl-3';
+		const card = document.createElement('div'); card.className = 'card camera-tile h-100';
+		const body = document.createElement('div'); body.className = 'card-body';
+		const title = document.createElement('h2'); title.className = 'h5';
+		title.textContent = camera.id;
+		const state = document.createElement('p'); state.className = 'small text-secondary mb-2';
+		state.textContent = 'Status unknown — availability not verified.';
+		const port = document.createElement('p'); port.className = 'small text-secondary mb-0';
+		port.textContent = 'Configured RTSP port: ' + camera.rtsp_port + '. No stream route is advertised.';
+		body.append(title, state, port); card.append(body); col.append(card);
+		$('camera-grid').append(col);
 	}
 	let generation = 0;
 	async function discover() {
 		const current = ++generation;
 		clear();
-		message('system-message', '');
 		message('status-message', 'Loading camera registry…');
 		try {
 			const data = await request('/api/cameras');
 			if (current !== generation) return;
 			if (!data || data.version !== 1 || !Array.isArray(data.cameras)) throw new Error('Invalid camera registry');
-			if (!data.cameras.length) {
+			const cameras = data.cameras.filter(validSlot).sort((a, b) => a.id.localeCompare(b.id));
+			if (cameras.length !== data.cameras.length) throw new Error('Invalid camera slot in registry');
+			cameras.forEach(renderCamera);
+			if (!cameras.length) {
 				$('empty-message').hidden = false;
-				message('status-message', 'No camera pipeline registered.');
-				return;
+				message('status-message', 'No configured camera slots.');
+			} else {
+				message('status-message', cameras.length + ' configured camera slot' + (cameras.length === 1 ? '' : 's') + '. Availability is unknown.');
 			}
-			// The current registry describes only this process's local pipeline.
-			const camera = data.cameras.find(item => item && item.id === 'local');
-			if (!camera) throw new Error('Local pipeline not present in camera registry');
-			const capabilities = camera.capabilities || {};
-			const card = document.createElement('div');
-			card.className = 'col-sm-6 col-xl-3';
-			const body = document.createElement('div'); body.className = 'card card-body';
-			const title = document.createElement('h2'); title.className = 'h5'; title.textContent = 'Local pipeline';
-			const state = document.createElement('p'); state.className = 'small text-secondary mb-0';
-			state.textContent = 'Camera status: ' + (camera.status === 'unknown' ? 'unknown' : 'not verified');
-			body.append(title, state); card.append(body); $('camera-grid').append(card);
-			$('camera-detail').hidden = false;
-			message('camera-state', 'Status unknown');
-			message('status-message', 'Local pipeline registered; camera availability is unknown.');
-			message('capabilities', 'Configured: snapshot ' + (capabilities.snapshot_configured === true ? 'on' : capabilities.snapshot_configured === false ? 'off' : 'unknown') + ', MJPEG ' + (capabilities.mjpeg_configured === true ? 'on' : capabilities.mjpeg_configured === false ? 'off' : 'unknown') + ', MP4 ' + (capabilities.mp4_configured === true ? 'on' : capabilities.mp4_configured === false ? 'off' : 'unknown') + '. Configuration does not confirm backend support or availability.');
-			$('snapshot').hidden = capabilities.snapshot_configured !== true;
-			try {
-				const status = await request('/api/status');
-				if (current !== generation) return;
-				for (const [key, label] of [['chip', 'Chip'], ['sensor', 'Sensor'], ['uptime', 'Uptime'], ['memory', 'Memory'], ['loadavg', 'Load average']]) {
-					if (status[key] == null) continue;
-					const dt = document.createElement('dt'), dd = document.createElement('dd');
-					dt.textContent = label; dd.textContent = Array.isArray(status[key]) ? status[key].join(', ') : String(status[key]);
-					$('status').append(dt, dd);
-				}
-			} catch (error) { if (current === generation) message('system-message', 'System status unavailable: ' + error.message); }
 		} catch (error) {
 			if (current !== generation) return;
 			clear();

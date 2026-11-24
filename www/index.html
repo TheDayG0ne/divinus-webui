@@ -18,19 +18,14 @@
 </div></header>
 <main class="container py-4">
   <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-    <div><h1 class="h3 mb-1">Camera pipeline</h1><p class="text-secondary mb-0" id="status-message" role="status">Loading camera registry…</p></div>
+    <div><h1 class="h3 mb-1">Cameras</h1><p class="text-secondary mb-0" id="status-message" role="status">Loading camera registry…</p></div>
     <button type="button" class="btn btn-outline-secondary btn-sm" id="refresh">Refresh</button>
   </div>
   <div id="camera-grid" class="row g-3 mt-1" aria-live="polite"></div>
-  <p id="empty-message" class="text-secondary mt-4" hidden>No camera pipeline registered.</p>
-  <section id="camera-detail" class="mt-4" hidden>
-    <div class="d-flex justify-content-between align-items-center mb-2"><h2 class="h5 mb-0">Local pipeline</h2><span class="badge text-bg-secondary" id="camera-state">Status unknown</span></div>
-    <div class="card"><div class="card-body">
-      <p id="capabilities"></p>
-      <p class="small text-secondary">A configured snapshot may still fail until an MJPEG frame is captured. Continuous MJPEG and audio are not supported by the x86 UVC backend.</p>
-      <a class="btn btn-outline-secondary btn-sm" id="snapshot" href="/image.jpg" target="_blank" rel="noopener" hidden>Open snapshot</a>
-    </div></div>
-    <div class="card mt-3"><div class="card-body"><h3 class="h5">System status</h3><p id="system-message" role="status"></p><dl id="status" class="divinus-status"></dl></div></div>
+  <p id="empty-message" class="text-secondary mt-4" hidden>No configured camera slots.</p>
+  <div id="warning" class="alert alert-warning mt-4" role="note">Dynamic camera management, snapshot and live status are not implemented yet. A registry entry is a configured slot; <code>status: unknown</code> is not availability.</div>
+  <section id="system-detail" class="mt-4" hidden>
+    <div class="card"><div class="card-body"><h2 class="h5">System status</h2><p id="system-message" role="status"></p><dl id="status" class="divinus-status"></dl></div></div>
   </section>
 </main>
 </body>

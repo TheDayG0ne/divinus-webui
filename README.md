@@ -1,10 +1,10 @@
 # Divinus WebUI x86
 
-A same-origin x86 dashboard derived from [OpenIPC/majestic-webui](https://github.com/OpenIPC/majestic-webui). It displays the local pipeline from Divinus `GET /api/cameras` version 1. This registry does not discover devices or provide multi-camera routing: `local` is a logical pipeline ID, and `status: unknown` does not mean a camera is connected or available. An absent, failed or invalid registry is reported without inventing a camera.
+A same-origin x86 dashboard derived from [OpenIPC/majestic-webui](https://github.com/OpenIPC/majestic-webui). It displays configured `camera-1` through `camera-4` slots from Divinus `GET /api/cameras` version 1. The launcher manifest is read-only: `status: unknown` does not mean a camera is connected, streaming or available. Empty, failed and invalid registries are reported without inventing a camera.
 
-The dashboard shows the registry's snapshot, MJPEG and MP4 **configured** flags, not backend support, readiness or a promise of frames. A configured snapshot link uses `/image.jpg` and may fail. System information comes from `/api/status`; its success does not establish camera liveness. All requests and links use relative same-origin paths; registry routes and ports are not used to construct destinations.
+The dashboard deliberately does not invent stream, snapshot or settings routes. It does not create RTSP URLs from a port: the server contract does not provide a worker address or RTSP path, and no field explicitly authorizes a usable RTSP link. All requests and links use relative same-origin paths; no HTTP ports or origins are added.
 
-For the x86 UVC backend, continuous MJPEG and audio are unsupported. JPEG requires a captured MJPEG frame and is unavailable for YUYV. Image and audio controls are not exposed by this dashboard, rather than implying UVC supports them. Other Divinus backends may differ. This frontend has not been validated on a physical x86 camera.
+Dynamic camera management, snapshot and live status are not implemented yet. The dashboard preserves this warning and shows only the configured slot identity and validated RTSP port. Other Divinus backends may differ. This frontend has not been validated on a physical x86 camera.
 
 ## Deployment
 
